@@ -16,20 +16,21 @@ pipeline {
             steps {
                 sh '''
                     echo "Building Docker image"
-                    docker build -t $docker_image devopsprojectjuly/
+                    docker build -t $docker_image .
                 '''
             }
         }
 
         stage("Push Docker image") {
             steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                        sh '''
-                            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                            docker push $docker_image
-                        '''
-                    }
+                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh '''
+                        echo "Logging in to DockerHub..."
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+
+                        echo "Pushing Docker image..."
+                        docker push $docker_image
+                    '''
                 }
             }
         }
@@ -37,10 +38,10 @@ pipeline {
 
     post {
         success {
-            echo 'Pipeline completed successfully'
+            echo '✅ Pipeline completed successfully'
         }
         failure {
-            echo 'Pipeline failed'
+            echo '❌ Pipeline failed'
         }
     }
 }
